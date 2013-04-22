@@ -3,6 +3,10 @@
 # Ported from ScraperWiki Classic - scraperwiki/services/datastore/datalib.py
 # This will make the code quite unRubyish - it is Julian Todd's Python, ported.
 
+
+# TODO:
+# Sort out 'error' bits
+
 require 'set'
 require 'sqlite3'
 
@@ -41,10 +45,9 @@ module SQLiteMagic
         ssinfo.rebuildinfo()
       end
 
-=begin
       if nrecords == 0 && unique_keys.length > 0
         idxname, idxkeys = ssinfo.findclosestindex(unique_keys)
-        puts "findclosestindex returned name, keys:", idxname, idxkeys
+        puts "findclosestindex returned name:"+ idxname.to_s + " keys:" + idxkeys.to_s
         if !idxname || idxkeys != unique_keys.to_set
           lres = ssinfo.makenewindex(idxname, unique_keys)
           if lres.include?('error')
@@ -53,7 +56,6 @@ module SQLiteMagic
           res.merge!(lres)
         end
       end
-=end
 
       lres = ssinfo.insertdata(ldata)
       if lres.include?('error')
@@ -78,8 +80,8 @@ module SQLiteMagic
     end
 
     def rebuildinfo()
-      tblinfo = @db.get_first_value("select count(*) from main.sqlite_master where name=?", @swdatatblname)
-      if tblinfo == 0
+      does_exist = @db.get_first_value("select count(*) from main.sqlite_master where name=?", @swdatatblname)
+      if does_exist == 0
         return false
       end
 
@@ -131,29 +133,29 @@ module SQLiteMagic
       @db.execute(format("alter table main.`%s` add column `%s` %s", @swdatatblname, k, vt))
     end
 
-=begin
     def findclosestindex(unique_keys)
       idxlist = @db.execute(format("PRAGMA main.index_list(`%s`)", @swdatatblname))  # [seq,name,unique]
-      puts "findclosestindex: idxlist is", idxlist
+      puts "findclosestindex: idxlist is "+ idxlist.to_s
       if idxlist.include?('error')
-        return [None, None]
+        return [nil, nil]
       end
         
       uniqueindexes = [ ]
-      for idxel in idxlist["data"]
+      for idxel in idxlist
         if idxel[2]
           idxname = idxel[1]
           idxinfo = @db.execute(format("PRAGMA main.index_info(`%s`)", idxname)) # [seqno,cid,name]
-          idxset = idxinfo["data"].map { |a| a[2] }.to_set
+          idxset = idxinfo.map { |a| a[2] }.to_set
           idxoverlap = idxset.intersection(unique_keys).length
-          uniqueindexes.push((idxoverlap, idxname, idxset))
+          uniqueindexes.push([idxoverlap, idxname, idxset])
         end
       end
       
-      if !uniqueindexes
-        return [None, None]
+      if uniqueindexes.length == 0
+        return [nil, nil]
       end
       uniqueindexes.sort()
+      puts "uniqueindexes=" + uniqueindexes.to_s
       return [uniqueindexes[-1][1], uniqueindexes[-1][2]]
     end
 
@@ -166,21 +168,22 @@ module SQLiteMagic
           istart = int(mnum.group(1))
         end
       end
-      for i in range(10000)
-        newidxname = "%s_index%d" % (@swdatatblname, istart+i)
-        if not @sqliteexecute("select name from main.sqlite_master where name=?", (newidxname,))['data']
+      for i in 0..10000
+        newidxname = format("%s_index%d", @swdatatblname, istart+i)
+        does_exist = @db.get_first_value("select count(*) from main.sqlite_master where name=?", newidxname)
+        if does_exist == 0
           break
         end
       end
         
       res = { "newindex" => newidxname }
       lres = @db.execute(format("create unique index `%s` on `%s` (%s)", newidxname, @swdatatblname, unique_keys.map { |k| format("`%s`", k) }.join(",")))
-      if 'error' in lres  
+      if lres.include?('error')
         return lres
       end
       if idxname
         lres = @db.execute(format("drop index main.`%s`", idxname))
-        if 'error' in lres  
+        if lres.include?('error')
           if lres['error'] != 'sqlite3.Error: index associated with UNIQUE or PRIMARY KEY constraint cannot be dropped'
             return lres
           end
@@ -189,7 +192,6 @@ module SQLiteMagic
       end
       return res
     end
-=end
 
     def insertdata(data)
       values = @swdatakeys.map { |k| data[k] } # this was data.get(k) in Python
