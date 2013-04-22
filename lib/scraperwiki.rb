@@ -1,3 +1,7 @@
+# Remove this in Ruby 1.9.2
+require 'sqlite3'
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
+puts $LOAD_PATH
 require 'scraperwiki/sqlite_save_info.rb'
 
 module ScraperWiki
