@@ -28,6 +28,8 @@ module SQLiteMagic
       ssinfo = @sqlitesaveinfo[swdatatblname]
     end
 
+    @db.transaction()
+
     nrecords = 0
     data.each do |ldata|
       newcols = ssinfo.newcolumns(ldata)
