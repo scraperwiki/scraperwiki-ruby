@@ -47,7 +47,7 @@ module SQLiteMagic
 
       if nrecords == 0 && unique_keys.length > 0
         idxname, idxkeys = ssinfo.findclosestindex(unique_keys)
-        puts "findclosestindex returned name:"+ idxname.to_s + " keys:" + idxkeys.to_s
+        # puts "findclosestindex returned name:"+ idxname.to_s + " keys:" + idxkeys.to_s
         if !idxname || idxkeys != unique_keys.to_set
           lres = ssinfo.makenewindex(idxname, unique_keys)
           if lres.include?('error')
@@ -86,7 +86,7 @@ module SQLiteMagic
       end
 
       tblinfo = @db.execute("PRAGMA main.table_info(`%s`)" % @swdatatblname)
-      puts "tblinfo="+ tblinfo.to_s
+      # puts "tblinfo="+ tblinfo.to_s
         # there's a bug:  PRAGMA main.table_info(swdata) returns the schema for otherdatabase.swdata 
         # following an attach otherdatabase where otherdatabase has a swdata and main does not
       
@@ -125,7 +125,7 @@ module SQLiteMagic
           end
         end
       end
-      puts "newcols=" + newcols.to_s
+      # puts "newcols=" + newcols.to_s
       return newcols
     end
 
@@ -135,7 +135,7 @@ module SQLiteMagic
 
     def findclosestindex(unique_keys)
       idxlist = @db.execute(format("PRAGMA main.index_list(`%s`)", @swdatatblname))  # [seq,name,unique]
-      puts "findclosestindex: idxlist is "+ idxlist.to_s
+      # puts "findclosestindex: idxlist is "+ idxlist.to_s
       if idxlist.include?('error')
         return [nil, nil]
       end
@@ -155,7 +155,7 @@ module SQLiteMagic
         return [nil, nil]
       end
       uniqueindexes.sort()
-      puts "uniqueindexes=" + uniqueindexes.to_s
+      # puts "uniqueindexes=" + uniqueindexes.to_s
       return [uniqueindexes[-1][1], uniqueindexes[-1][2]]
     end
 
