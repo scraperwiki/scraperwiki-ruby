@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# TODO: Make this into an actual *test* script, not just a chunk of code
 
 require './lib/scraperwiki.rb'
 
