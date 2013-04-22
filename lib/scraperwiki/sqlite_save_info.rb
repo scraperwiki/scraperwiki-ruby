@@ -1,23 +1,25 @@
 # Builds schemas automatically from a hash, for SQLite databases
 # 
 # Ported from ScraperWiki Classic - scraperwiki/services/datastore/datalib.py
+# This will make the code quite unRubyish - it is Julian Todd's Python, ported.
 
+require 'set'
 require 'sqlite3'
 
 module SQLiteMagic
   @db = SQLite3::Database.new("scraperwiki.sqlite")
   @sqlitesaveinfo = {}
 
-  def _do_save_sqlite(unique_keys, data, swdatatblname)
+  def SQLiteMagic._do_save_sqlite(unique_keys, data, swdatatblname)
     res = { }
     if data.class == Hash
       data = [data]
     end
 
     if !@sqlitesaveinfo.include?(swdatatblname)
-      ssinfo = SqliteSaveInfo(swdatatblname)
+      ssinfo = SqliteSaveInfo.new(swdatatblname, @db)
       @sqlitesaveinfo[swdatatblname] = ssinfo
-      if not ssinfo.rebuildinfo() and data
+      if not ssinfo.rebuildinfo() and data.length > 0
         ssinfo.buildinitialtable(data[0])
         ssinfo.rebuildinfo()
         res["tablecreated"] = swdatatblname
@@ -29,7 +31,7 @@ module SQLiteMagic
     nrecords = 0
     data.each do |ldata|
       newcols = ssinfo.newcolumns(ldata)
-      if newcols
+      if newcols.length > 0
         newcols.each_with_index do |kv, i|
           ssinfo.addnewcolumn(kv[0], kv[1])
           res["newcolumn %d" % i] = "%s %s" % kv
@@ -38,17 +40,21 @@ module SQLiteMagic
       end
 
 =begin
-      if nrecords == 0 && unique_keys
+      if nrecords == 0 && unique_keys.length > 0
         idxname, idxkeys = ssinfo.findclosestindex(unique_keys)
-        if !idxname || idxkeys != set(unique_keys)
+        puts "findclosestindex returned name, keys:", idxname, idxkeys
+        if !idxname || idxkeys != unique_keys.to_set
           lres = ssinfo.makenewindex(idxname, unique_keys)
-          if lres.include?("error")
+          if lres.include?('error')
             return lres
+          end
           res.merge!(lres)
+        end
+      end
 =end
 
       lres = ssinfo.insertdata(ldata)
-      if lres.include?("error")
+      if lres.include?('error')
         return lres
       end
       nrecords += 1
@@ -61,46 +67,46 @@ module SQLiteMagic
 
 
   class SqliteSaveInfo
-    def initialize(swdatatblname)
+    def initialize(swdatatblname, db)
       @swdatatblname = swdatatblname
       @swdatakeys = [ ]
       @swdatatypes = [  ]
       @sqdatatemplate = ""
+      @db = db
     end
 
     def rebuildinfo()
-      tblinfo = @db.query("select * from main.sqlite_master where name=?", "name" => @swdatatblname)
-      puts "tblinfo is", tblinfo
-      if got nothing
+      tblinfo = @db.get_first_value("select count(*) from main.sqlite_master where name=?", @swdatatblname)
+      if tblinfo == 0
         return false
       end
 
       tblinfo = @db.execute("PRAGMA main.table_info(`%s`)" % @swdatatblname)
+      puts "tblinfo="+ tblinfo.to_s
         # there's a bug:  PRAGMA main.table_info(swdata) returns the schema for otherdatabase.swdata 
         # following an attach otherdatabase where otherdatabase has a swdata and main does not
       
-      @swdatakeys = tblinfo["data"].map { |a| a[1] }
-      @swdatatypes = tblinfo["data"].map { |a| a[2] }
+      @swdatakeys = tblinfo.map { |a| a[1] }
+      @swdatatypes = tblinfo.map { |a| a[2] }
       @sqdatatemplate = format("insert or replace into main.`%s` values (%s)", @swdatatblname, (["?"]*@swdatakeys.length).join(","))
-      return True
+      return true
     end
     
         
     def buildinitialtable(data)
-      raise "buildinitialtable: no swdatakeys" unless !@swdatakeys
+      raise "buildinitialtable: no swdatakeys" unless @swdatakeys.length == 0
       coldef = self.newcolumns(data)
-      raise "buildinitialtable: no coldef" unless coldef
+      raise "buildinitialtable: no coldef" unless coldef.length > 0
       # coldef = coldef[:1]  # just put one column in; the rest could be altered -- to prove it's good
-      scoldef = join(  coldef.map { |col| format("`%s` %s", col[0], col[1]) }.join(",")
+      scoldef = coldef.map { |col| format("`%s` %s", col[0], col[1]) }.join(",")
           # used to just add date_scraped in, but without it can't create an empty table
       @db.execute(format("create table main.`%s` (%s)", @swdatatblname, scoldef))
     end
     
     def newcolumns(data)
       newcols = [ ]
-      for k in data
+      for k, v in data
         if !@swdatakeys.include?(k)
-          v = data[k]
           if v != nil
             #if k[-5:] == "_blob"
             #  vt = "blob"  # coerced into affinity none
@@ -115,6 +121,7 @@ module SQLiteMagic
           end
         end
       end
+      puts "newcols=" + newcols.to_s
       return newcols
     end
 
@@ -125,16 +132,17 @@ module SQLiteMagic
 =begin
     def findclosestindex(unique_keys)
       idxlist = @db.execute(format("PRAGMA main.index_list(`%s`)", @swdatatblname))  # [seq,name,unique]
-      uniqueindexes = [ ]
+      puts "findclosestindex: idxlist is", idxlist
       if idxlist.include?('error')
         return [None, None]
       end
         
+      uniqueindexes = [ ]
       for idxel in idxlist["data"]
         if idxel[2]
           idxname = idxel[1]
           idxinfo = @db.execute(format("PRAGMA main.index_info(`%s`)", idxname)) # [seqno,cid,name]
-          idxset = set([ a[2]  for a in idxinfo["data"] ])
+          idxset = idxinfo["data"].map { |a| a[2] }.to_set
           idxoverlap = idxset.intersection(unique_keys).length
           uniqueindexes.push((idxoverlap, idxname, idxset))
         end
@@ -165,13 +173,13 @@ module SQLiteMagic
         
       res = { "newindex" => newidxname }
       lres = @db.execute(format("create unique index `%s` on `%s` (%s)", newidxname, @swdatatblname, unique_keys.map { |k| format("`%s`", k) }.join(",")))
-      if "error" in lres  
+      if 'error' in lres  
         return lres
       end
       if idxname
         lres = @db.execute(format("drop index main.`%s`", idxname))
-        if "error" in lres  
-          if lres["error"] != 'sqlite3.Error: index associated with UNIQUE or PRIMARY KEY constraint cannot be dropped'
+        if 'error' in lres  
+          if lres['error'] != 'sqlite3.Error: index associated with UNIQUE or PRIMARY KEY constraint cannot be dropped'
             return lres
           end
         end
@@ -181,6 +189,10 @@ module SQLiteMagic
     end
 =end
 
+    def insertdata(data)
+      values = @swdatakeys.map { |k| data[k] } # this was data.get(k) in Python
+      return @db.query(@sqdatatemplate, values)
+    end
   end
 
 end

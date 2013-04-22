@@ -1,7 +1,5 @@
-# Remove this in Ruby 1.9.2
 require 'sqlite3'
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
-puts $LOAD_PATH
 require 'scraperwiki/sqlite_save_info.rb'
 
 module ScraperWiki
@@ -78,7 +76,7 @@ module ScraperWiki
 
         end
 
-        _do_save_sqlite(unique_keys, rjdata, table_name)
+        SQLiteMagic._do_save_sqlite(unique_keys, rjdata, table_name)
     end 
 
     # Internal function to check a row of data, convert to right format
