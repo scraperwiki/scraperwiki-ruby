@@ -88,13 +88,13 @@ module ScraperWiki
         if unique_keys
             for key in unique_keys
                 if !key.kind_of?(String) and !key.kind_of?(Symbol)
-                    return 'unique_keys must each be a string or a symbol, this one is not: ' + key
+                    raise 'unique_keys must each be a string or a symbol, this one is not: ' + key
                 end
                 if !scraper_data.include?(key) and !scraper_data.include?(key.to_sym)
-                    return 'unique_keys must be a subset of data, this one is not: ' + key
+                    raise 'unique_keys must be a subset of data, this one is not: ' + key
                 end
                 if scraper_data[key] == nil and scraper_data[key.to_sym] == nil
-                    return 'unique_key value should not be nil, this one is nil: ' + key
+                    raise 'unique_key value should not be nil, this one is nil: ' + key
                 end
             end
         end

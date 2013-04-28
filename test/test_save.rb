@@ -43,7 +43,6 @@ CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
   end
 
   def test_replace_an_animal_with_newer_version
-    # Make a temporary directory (erased at end of block)
     Dir.mktmpdir { |dir|
       Dir.chdir dir
       ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
@@ -56,7 +55,6 @@ CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
   end
 
   def test_add_new_column_with_later_save
-    # Make a temporary directory (erased at end of block)
     Dir.mktmpdir { |dir|
       Dir.chdir dir
       ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
@@ -68,6 +66,33 @@ INSERT INTO "animals" VALUES(40,'kitten',91,87);
 CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
     }
   end
+
+  def test_failing_highrise_save
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
+      ScraperWiki.save_sqlite(['id'], {'id'=> 40, 'animal'=> 'kitten', 'awesomeness'=> 91, 'cuteness'=> 87 }, table_name = "animals")
+      ScraperWiki.close_sqlite
+      check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer, `cuteness` integer);
+INSERT INTO "animals" VALUES(10,'fox',23,NULL);
+INSERT INTO "animals" VALUES(40,'kitten',91,87);
+CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
+    }
+  end
+
+  def test_unique_key_not_in_list
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      data = {:set_date=>"2013-04-28", :deal_id=>2493454, :company_name=>"Foo Bar Ltd", :created_at=>"2013-01-15", :updated_at=>"2013-04-25", :price=>0, :price_type=>"fixed", :currency=>"GBP", :duration=>1, :status=>"pending", :status_changed_on=>"2013-04-25", :deal_name=>"809 - Farming data", :category=>"Application Development (p)", :background=>"Just a note to keep track of this opportunity"}
+      # note, we've accidentally quoted a pair of unique keys in one string
+      begin
+        ScraperWiki.save_sqlite(['set_date, deal_id'], data, table_name="highrise")
+      rescue RuntimeError =>e
+        assert_equal "unique_keys must be a subset of data, this one is not: set_date, deal_id", e.message
+      end
+    }
+  end
+
 
 
 end
