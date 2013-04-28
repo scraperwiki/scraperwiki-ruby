@@ -67,19 +67,6 @@ CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
     }
   end
 
-  def test_failing_highrise_save
-    Dir.mktmpdir { |dir|
-      Dir.chdir dir
-      ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
-      ScraperWiki.save_sqlite(['id'], {'id'=> 40, 'animal'=> 'kitten', 'awesomeness'=> 91, 'cuteness'=> 87 }, table_name = "animals")
-      ScraperWiki.close_sqlite
-      check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer, `cuteness` integer);
-INSERT INTO "animals" VALUES(10,'fox',23,NULL);
-INSERT INTO "animals" VALUES(40,'kitten',91,87);
-CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
-    }
-  end
-
   def test_unique_key_not_in_list
     Dir.mktmpdir { |dir|
       Dir.chdir dir
