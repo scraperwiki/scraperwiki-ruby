@@ -1,5 +1,5 @@
-ScraperWiki library
-===================
+ScraperWiki Ruby library
+========================
 
 This is a Ruby library for scraping web pages and saving data.
 
