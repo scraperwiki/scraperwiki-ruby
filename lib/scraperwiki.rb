@@ -79,7 +79,7 @@ module ScraperWiki
         SQLiteMagic._do_save_sqlite(unique_keys, rjdata, table_name)
     end 
 
-    def ScraperWiki.close_sqlite
+    def ScraperWiki.close_sqlite()
         SQLiteMagic.close
     end
 
