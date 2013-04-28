@@ -10,8 +10,9 @@ can also be used locally or on your own servers.
 Installing
 ==========
 
+```
 gem install scraperwiki
-
+```
 
 Scraping
 ========
