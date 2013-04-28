@@ -15,6 +15,7 @@ class ScraperWikiSaveTest < Test::Unit::TestCase
       Dir.chdir dir
       ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
       ScraperWiki.save_sqlite(['id'], {'id'=> 20, 'animal'=> 'rabbit', 'awesomeness'=> 37 }, table_name = "animals")
+      SQLiteMagic.close
       check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer);
 INSERT INTO "animals" VALUES(10,'fox',23);
 INSERT INTO "animals" VALUES(20,'rabbit',37);
@@ -32,9 +33,10 @@ CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
       ]
 
       ScraperWiki.save_sqlite(['id'], datas, table_name = "animals")
+      SQLiteMagic.close
       check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer);
 INSERT INTO "animals" VALUES(10,'fox',23);
-INSERT INTO "animals" VALUES(30,'pollar bear',99);
+INSERT INTO "animals" VALUES(30,'polar bear',99);
 CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
     }
   end

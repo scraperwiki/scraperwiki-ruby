@@ -62,9 +62,6 @@ module SQLiteMagic
       end
 
       lres = ssinfo.insertdata(ldata)
-      if lres.include?('error')
-        return lres
-      end
       nrecords += 1
     end
 
@@ -73,13 +70,19 @@ module SQLiteMagic
     return res
   end
 
+  def SQLiteMagic.close()
+    @db.close
+    @db = nil
+    @sqlitesaveinfo = {}
+  end
+
 
   class SqliteSaveInfo
     def initialize(swdatatblname, db)
       @swdatatblname = swdatatblname
       @swdatakeys = [ ]
       @swdatatypes = [  ]
-      @sqdatatemplate = ""
+      @sqdatatemplate = "" 
       @db = db
     end
 
@@ -91,8 +94,6 @@ module SQLiteMagic
 
       tblinfo = @db.execute("PRAGMA main.table_info(`%s`)" % @swdatatblname)
       # puts "tblinfo="+ tblinfo.to_s
-        # there's a bug:  PRAGMA main.table_info(swdata) returns the schema for otherdatabase.swdata 
-        # following an attach otherdatabase where otherdatabase has a swdata and main does not
       
       @swdatakeys = tblinfo.map { |a| a[1] }
       @swdatatypes = tblinfo.map { |a| a[2] }
@@ -198,8 +199,9 @@ module SQLiteMagic
     end
 
     def insertdata(data)
-      values = @swdatakeys.map { |k| data[k] } # this was data.get(k) in Python
-      return @db.query(@sqdatatemplate, values)
+      values = @swdatakeys.map { |k| data[k] } 
+      res = @db.query(@sqdatatemplate, values)
+      res.close
     end
   end
 
