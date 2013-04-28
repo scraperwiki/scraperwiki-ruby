@@ -11,11 +11,13 @@ end
 class ScraperWikiSaveTest < Test::Unit::TestCase
 
   def test_save_two_animals
+    # Make a temporary directory (erased at end of block)
     Dir.mktmpdir { |dir|
+      # Change into it, as place to make temporary 
       Dir.chdir dir
       ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
       ScraperWiki.save_sqlite(['id'], {'id'=> 20, 'animal'=> 'rabbit', 'awesomeness'=> 37 }, table_name = "animals")
-      SQLiteMagic.close
+      ScraperWiki.close_sqlite
       check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer);
 INSERT INTO "animals" VALUES(10,'fox',23);
 INSERT INTO "animals" VALUES(20,'rabbit',37);

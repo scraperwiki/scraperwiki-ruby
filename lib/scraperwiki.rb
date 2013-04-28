@@ -79,6 +79,10 @@ module ScraperWiki
         SQLiteMagic._do_save_sqlite(unique_keys, rjdata, table_name)
     end 
 
+    def ScraperWiki.close_sqlite
+        SQLiteMagic.close
+    end
+
     # Internal function to check a row of data, convert to right format
     def ScraperWiki._convdata(unique_keys, scraper_data)
         if unique_keys
