@@ -11,10 +11,14 @@ require 'set'
 require 'sqlite3'
 
 module SQLiteMagic
-  @db = SQLite3::Database.new("scraperwiki.sqlite")
+  @db = nil
   @sqlitesaveinfo = {}
 
   def SQLiteMagic._do_save_sqlite(unique_keys, data, swdatatblname)
+    if @db.nil?
+      @db = SQLite3::Database.new("scraperwiki.sqlite")
+    end
+
     res = { }
     if data.class == Hash
       data = [data]
