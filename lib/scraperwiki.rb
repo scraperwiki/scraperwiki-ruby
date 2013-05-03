@@ -1,3 +1,4 @@
+require 'httpclient'
 require 'sqlite3'
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'scraperwiki/sqlite_save_info.rb'
