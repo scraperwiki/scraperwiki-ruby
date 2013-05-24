@@ -80,8 +80,27 @@ CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
     }
   end
 
+  def test_new_columns_with_new_keys
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
+      ScraperWiki.save_sqlite(['id'], {'id'=> 40, 'animal'=> 'kitten', 'awesomeness'=> 91, 'cuteness'=> 87 }, table_name = "animals")
+      ScraperWiki.close_sqlite
+      check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer, `cuteness` integer);
+INSERT INTO "animals" VALUES(10,'fox',23,NULL);
+INSERT INTO "animals" VALUES(40,'kitten',91,87);
+CREATE UNIQUE INDEX `animals_index0` on `animals` (`id`);}
 
-
+      ## Now add new set of data
+      ScraperWiki.save_sqlite(['link'], {'link'=> "http://dummy.com/fox.html", 'animal'=> 'fox', 'meat'=> 50, "edible"=> "False" }, table_name = "animals")
+      ScraperWiki.close_sqlite
+      check_dump %Q{CREATE TABLE `animals` (`id` integer,`animal` text,`awesomeness` integer, `cuteness` integer, `link` text, `meat` integer, `edible` text);
+INSERT INTO "animals" VALUES(10,'fox',23,NULL,NULL,NULL,NULL);
+INSERT INTO "animals" VALUES(40,'kitten',91,87,NULL,NULL,NULL);
+INSERT INTO "animals" VALUES(NULL,'fox',NULL,NULL,'http://dummy.com/fox.html',50,'False');
+CREATE UNIQUE INDEX `animals_index1` on `animals` (`link`);}
+    }
+  end
 end
 
 

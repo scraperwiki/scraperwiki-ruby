@@ -8,4 +8,7 @@ Gem::Specification.new do |s|
   s.email       = 'francis@scraperwiki.com'
   s.files       = ["lib/scraperwiki.rb", "lib/scraperwiki/sqlite_save_info.rb"]
   s.homepage    = 'http://rubygems.org/gems/scraperwiki'
+
+  s.add_dependency "httpclient"
+  s.add_dependency "sqlite3"
 end
