@@ -168,10 +168,11 @@ module SQLiteMagic
     def makenewindex(idxname, unique_keys)
       istart = 0
       if idxname
-        mnum = re.search("(\d+)$", idxname)
-        if mnum
-          istart = int(mnum.group(1))
-        end
+        #mnum = re.search("(\d+)$", idxname)
+        #if mnum
+        #  istart = int(mnum.group(1))
+        #end
+        istart = idxname.match("(\d+)$").first.to_i rescue 0
       end
       for i in 0..10000
         newidxname = format("%s_index%d", @swdatatblname, istart+i)
