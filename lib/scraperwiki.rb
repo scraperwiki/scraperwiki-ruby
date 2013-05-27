@@ -57,7 +57,7 @@ module ScraperWiki
     # === Example
     # ScraperWiki::save(['id'], {'id'=>1})
     #
-    def ScraperWiki.save_sqlite(unique_keys, data, table_name="swdata")
+    def ScraperWiki.save_sqlite(unique_keys, data, table_name="swdata",verbose=0)
         raise 'unique_keys must be nil or an array' if unique_keys != nil && !unique_keys.kind_of?(Array)
         raise 'data must have a non-nil value' if data == nil
 
@@ -79,6 +79,10 @@ module ScraperWiki
 
         SQLiteMagic._do_save_sqlite(unique_keys, rjdata, table_name)
     end 
+
+    def ScraperWiki.sqliteexecute(query)
+      SQLiteMagic.sqliteexecute(query)
+    end
 
     def ScraperWiki.close_sqlite()
         SQLiteMagic.close

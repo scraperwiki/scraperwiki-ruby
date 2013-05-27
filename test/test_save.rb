@@ -101,6 +101,17 @@ INSERT INTO "animals" VALUES(NULL,'fox',NULL,NULL,'http://dummy.com/fox.html',50
 CREATE UNIQUE INDEX `animals_index1` on `animals` (`link`);}
     }
   end
+
+  def test_dql
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ScraperWiki.save_sqlite(['id'],{"id"=>1,"name"=>"abc"})
+      ScraperWiki.save_sqlite(['id'],{"id"=>2,"name"=>"def"})
+      assert_equal ScraperWiki.sqliteexecute("select * from swdata"),{"keys"=>["id", "name"], "data"=>[[1, "abc"], [2, "def"]]}
+      ScraperWiki.close_sqlite
+    }
+  end
+
 end
 
 

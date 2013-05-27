@@ -70,6 +70,12 @@ module SQLiteMagic
     return res
   end
 
+  def SQLiteMagic.sqliteexecute(query)
+    arr = @db.execute2(query) unless @db.nil?
+    return {"keys"=>arr[0], "data"=>arr[1..-1]} unless arr.nil? or arr.empty?
+    
+  end
+
   def SQLiteMagic.close()
     @db.close
     @db = nil
