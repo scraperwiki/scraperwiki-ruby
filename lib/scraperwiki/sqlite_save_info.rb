@@ -71,8 +71,8 @@ module SQLiteMagic
   end
 
   def SQLiteMagic.sqliteexecute(query)
-    arr = @db.execute2(query) unless @db.nil?
-    return {"keys"=>arr[0], "data"=>arr[1..-1]} unless arr.nil? or arr.empty?
+    cols,*rows = @db.execute2(query) unless @db.nil?
+    return {"keys"=>cols, "data"=>rows} unless cols.nil? or rows.nil?
     
   end
 
