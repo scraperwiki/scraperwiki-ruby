@@ -112,6 +112,20 @@ CREATE UNIQUE INDEX `animals_index1` on `animals` (`link`);}
     }
   end
 
+  def test_session_state
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ##Check the save
+      ScraperWiki.save_var("scraperwiki","awesome")
+      check_dump %Q{CREATE TABLE `swvariables` (`name` text,`value_blob` text,`type` text);
+INSERT INTO "swvariables" VALUES('scraperwiki','awesome','String');
+CREATE UNIQUE INDEX `swvariables_index0` on `swvariables` (`name`);}
+
+      ##Check the retrieval 
+      assert_equal ScraperWiki.get_var("scraperwiki"),"awesome"
+      assert_equal ScraperWiki.get_var("none"),nil
+    }
+  end
 end
 
 

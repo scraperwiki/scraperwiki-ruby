@@ -80,8 +80,8 @@ module ScraperWiki
         SQLiteMagic._do_save_sqlite(unique_keys, rjdata, table_name)
     end 
 
-    def ScraperWiki.sqliteexecute(query)
-      SQLiteMagic.sqliteexecute(query)
+    def ScraperWiki.sqliteexecute(query,data=nil, verbose=2)
+      SQLiteMagic.sqliteexecute(query,data,verbose)
     end
 
     def ScraperWiki.close_sqlite()
@@ -130,4 +130,65 @@ module ScraperWiki
         return jdata
     end
 
+    # Allows the user to retrieve a previously saved variable
+    #
+    # === Parameters
+    #
+    # * _name_ = The variable name to fetch
+    # * _default_ = The value to use if the variable name is not found
+    # * _verbose_ = Verbosity level
+    #
+    # === Example
+    # ScraperWiki::get_var('current', 0)
+    #
+    def ScraperWiki.get_var(name, default=nil, verbose=2)
+        begin
+            result = ScraperWiki.sqliteexecute("select value_blob, type from swvariables where name=?", [name], verbose)
+        rescue NoSuchTableSqliteException => e   
+            return default
+        end
+        
+        if !result.has_key?("data") 
+            return default          
+        end 
+        
+        if result["data"].length == 0
+            return default
+        end
+        # consider casting to type
+        svalue = result["data"][0][0]
+        vtype = result["data"][0][1]
+        if vtype == "Fixnum"
+            return svalue.to_i
+        end
+        if vtype == "Float"
+            return svalue.to_f
+        end
+        if vtype == "NilClass"
+            return nil
+        end
+        return svalue
+    end
+    
+    # Allows the user to save a single variable (at a time) to carry state across runs of
+    # the scraper.
+    #
+    # === Parameters
+    #
+    # * _name_ = The variable name
+    # * _value_ = The value of the variable
+    # * _verbose_ = Verbosity level
+    #
+    # === Example
+    # ScraperWiki::save_var('current', 100)
+    #
+    def ScraperWiki.save_var(name, value, verbose=2)
+        vtype = String(value.class)
+        svalue = value.to_s
+        if vtype != "Fixnum" and vtype != "String" and vtype != "Float" and vtype != "NilClass"
+            puts "*** object of type "+vtype+" converted to string\n"
+        end
+        data = { "name" => name, "value_blob" => svalue, "type" => vtype }
+        ScraperWiki.save_sqlite(unique_keys=["name"], data=data, table_name="swvariables", verbose=verbose)
+    end
 end

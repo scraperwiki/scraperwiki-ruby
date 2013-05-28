@@ -70,8 +70,9 @@ module SQLiteMagic
     return res
   end
 
-  def SQLiteMagic.sqliteexecute(query)
-    cols,*rows = @db.execute2(query) unless @db.nil?
+  def SQLiteMagic.sqliteexecute(query,data=nil, verbose=2)
+    #puts [query,data].inspect
+    cols,*rows = (data.nil?)? @db.execute2(query) : @db.execute2(query,data) unless @db.nil?
     return {"keys"=>cols, "data"=>rows} unless cols.nil? or rows.nil?
   end
 
