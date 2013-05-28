@@ -8,7 +8,7 @@ def check_dump(expected_dump)
   assert_equal actual_dump, expected_dump
 end
 
-class ScraperWikiSelectTest < Test::Unit::TestCase
+class ScraperWikiExecuteTest < Test::Unit::TestCase
   def test_session_state
     Dir.mktmpdir { |dir|
       Dir.chdir dir
@@ -37,7 +37,19 @@ CREATE UNIQUE INDEX `swvariables_index0` on `swvariables` (`name`);}
   def test_sqliteexecute_without_records
     Dir.mktmpdir { |dir|
       Dir.chdir dir
-      assert_raise(SqliteException){ScraperWiki.sqliteexecute("select * from animals")}
+      assert_raise(SQLite3::SQLException){ScraperWiki.sqliteexecute("select * from animals")}
+      ScraperWiki.close_sqlite
+    }
+  end
+
+  def test_sqliteexecute_with_data_definition_statements
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ScraperWiki.sqliteexecute("create table animals(id int,animal text,awesomeness int)")
+      check_dump %Q{CREATE TABLE animals(id int,animal text,awesomeness int);}
+      ScraperWiki.sqliteexecute("alter table animals rename to mammals")
+      check_dump %Q{CREATE TABLE "mammals"(id int,animal text,awesomeness int);}
+      ScraperWiki.close_sqlite
     }
   end
 end

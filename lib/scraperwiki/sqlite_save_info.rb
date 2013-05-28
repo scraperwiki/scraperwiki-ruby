@@ -71,8 +71,9 @@ module SQLiteMagic
   end
 
   def SQLiteMagic.sqliteexecute(query,data=nil, verbose=2)
-    #puts [query,data].inspect
-    ScraperWiki.raisesqliteerror("Uninitialized database") if @db.nil?
+    if @db.nil?
+      @db = SQLite3::Database.new("scraperwiki.sqlite")
+    end
     cols,*rows = (data.nil?)? @db.execute2(query) : @db.execute2(query,data)
     return {"keys"=>cols, "data"=>rows} unless cols.nil? or rows.nil?
   end

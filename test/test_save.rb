@@ -103,5 +103,3 @@ CREATE UNIQUE INDEX `animals_index1` on `animals` (`link`);}
   end
 
 end
-
-
