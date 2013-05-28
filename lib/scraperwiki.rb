@@ -3,6 +3,9 @@ require 'sqlite3'
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'scraperwiki/sqlite_save_info.rb'
 
+class SqliteException < RuntimeError
+end
+
 module ScraperWiki
 
     # The scrape method fetches the content from a webserver.
@@ -190,5 +193,15 @@ module ScraperWiki
         end
         data = { "name" => name, "value_blob" => svalue, "type" => vtype }
         ScraperWiki.save_sqlite(unique_keys=["name"], data=data, table_name="swvariables", verbose=verbose)
+    end
+
+    def ScraperWiki.raisesqliteerror(rerror)
+        if /sqlite3.Error: no such table:/.match(rerror)  # old dataproxy
+            raise NoSuchTableSqliteException.new(rerror)
+        end
+        if /DB Error: \(OperationalError\) no such table:/.match(rerror)
+            raise NoSuchTableSqliteException.new(rerror)
+        end
+        raise SqliteException.new(rerror)
     end
 end
