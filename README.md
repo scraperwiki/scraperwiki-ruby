@@ -33,7 +33,7 @@ Currently only supports SQLite. It will make a local SQLite database.
 You should expect it to support other SQL databases at a later date.
 
 
-ScraperWiki.save\_sqlite(unique\_keys, data[, table\_name = "swdata"])
+ScraperWiki.save\_sqlite(unique\_keys, data[, table\_name = "swdata"],verbose = 0)
 -------------------------------------------------------------------
 
 Saves a data record into the datastore into the table given
@@ -46,4 +46,4 @@ overwritten.
 
 For large numbers of records *data* can be a list of dicts.
 
-
+*verbose*, kept for smooth migration from classic, doesn't do anything yet.
