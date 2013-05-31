@@ -70,6 +70,14 @@ module SQLiteMagic
     return res
   end
 
+  def SQLiteMagic.sqliteexecute(query,data=nil, verbose=2)
+    if @db.nil?
+      @db = SQLite3::Database.new("scraperwiki.sqlite")
+    end
+    cols,*rows = (data.nil?)? @db.execute2(query) : @db.execute2(query,data)
+    return {"keys"=>cols, "data"=>rows} unless cols.nil? or rows.nil?
+  end
+
   def SQLiteMagic.close()
     @db.close
     @db = nil
@@ -108,7 +116,6 @@ module SQLiteMagic
       raise "buildinitialtable: no coldef" unless coldef.length > 0
       # coldef = coldef[:1]  # just put one column in; the rest could be altered -- to prove it's good
       scoldef = coldef.map { |col| format("`%s` %s", col[0], col[1]) }.join(",")
-          # used to just add date_scraped in, but without it can't create an empty table
       @db.execute(format("create table main.`%s` (%s)", @swdatatblname, scoldef))
     end
     

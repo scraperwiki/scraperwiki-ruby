@@ -101,6 +101,5 @@ INSERT INTO "animals" VALUES(NULL,'fox',NULL,NULL,'http://dummy.com/fox.html',50
 CREATE UNIQUE INDEX `animals_index1` on `animals` (`link`);}
     }
   end
+
 end
-
-
