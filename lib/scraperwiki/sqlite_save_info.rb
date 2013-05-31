@@ -14,10 +14,14 @@ module SQLiteMagic
   @db = nil
   @sqlitesaveinfo = {}
 
-  def SQLiteMagic._do_save_sqlite(unique_keys, data, swdatatblname)
+  def SQLiteMagic._open_db_if_necessary()
     if @db.nil?
       @db = SQLite3::Database.new("scraperwiki.sqlite")
     end
+  end
+
+  def SQLiteMagic._do_save_sqlite(unique_keys, data, swdatatblname)
+    SQLiteMagic._open_db_if_necessary
 
     res = { }
     if data.class == Hash
@@ -71,9 +75,7 @@ module SQLiteMagic
   end
 
   def SQLiteMagic.sqliteexecute(query,data=nil, verbose=2)
-    if @db.nil?
-      @db = SQLite3::Database.new("scraperwiki.sqlite")
-    end
+    SQLiteMagic._open_db_if_necessary
     cols,*rows = (data.nil?)? @db.execute2(query) : @db.execute2(query,data)
     return {"keys"=>cols, "data"=>rows} unless cols.nil? or rows.nil?
   end
