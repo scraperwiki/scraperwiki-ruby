@@ -54,20 +54,35 @@ ScraperWiki.sqliteexecute(query,[params],verbose)
 Executes provided query with the parameters against the database and returns the results in key value pairs
 
 *query* is a sql statement
+
 *params*, if prepared statement will contains an array of values
 
-ScraperWiki.save_var(name,value,verbose)
+ScraperWiki.save\_var(name,value,verbose)
 ---------------------------------
 Allows the user to save a single variable (at a time) to carry state across runs of the scraper.
 
 *name*, the variable name
+
 *value*, the value of the variable
+
 *verbose*, verbosity level
 
-ScraperWiki.get_var(name,default,verbose)
+ScraperWiki.get\_var(name,default,verbose)
 ---------------------------------
 Allows the user to retrieve a previously saved variable
 
 *name*, The variable name to fetch
+
 *value*, The value to use if the variable name is not found
+
+*verbose*, verbosity level
+
+ScraperWiki.select(partial\_query,[params],verbose)
+---------------------------------
+Allows for a simplified select statement
+
+*partial_query*, A valid select statement, without the select keyword
+
+*params* Any data provided for ? replacements in the query
+
 *verbose*, verbosity level

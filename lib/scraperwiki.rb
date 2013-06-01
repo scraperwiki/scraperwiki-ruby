@@ -204,4 +204,31 @@ module ScraperWiki
         end
         raise SqliteException.new(rerror)
     end
+
+    # Allows for a simplified select statement
+    #
+    # === Parameters
+    #
+    # * _sqlquery_ = A valid select statement, without the select keyword
+    # * _data_ = Any data provided for ? replacements in the query
+    # * _verbose_ = A verbosity level
+    #
+    # === Returns
+    # A list of hashes containing the returned data
+    #
+    # === Example
+    # ScraperWiki::select('* from swdata')    
+    #    
+    def ScraperWiki.select(sqlquery, data=nil, verbose=1)
+        if data != nil && sqlquery.scan(/\?/).length != 0 && data.class != Array
+            data = [data]
+        end
+        result = ScraperWiki.sqliteexecute("select "+sqlquery, data, verbose)
+        res = [ ]
+        for d in result["data"]
+            #res.push(Hash[result["keys"].zip(d)])           # post-1.8.7
+            res.push(Hash[*result["keys"].zip(d).flatten])   # pre-1.8.7
+        end
+        return res
+    end
 end
