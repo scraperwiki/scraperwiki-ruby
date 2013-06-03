@@ -52,4 +52,26 @@ CREATE UNIQUE INDEX `swvariables_index0` on `swvariables` (`name`);}
       ScraperWiki.close_sqlite
     }
   end
+
+  def test_select_with_single_column
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
+      ScraperWiki.save_sqlite(['id'], {'id'=> 11, 'animal'=> 'cat', 'awesomeness'=> 22 }, table_name = "animals")
+
+      assert_equal ScraperWiki.select("animal from animals"),[{"animal"=>"fox"}, {"animal"=>"cat"}]
+      ScraperWiki.close_sqlite
+    }
+  end
+
+  def test_select_with_multiple_column
+    Dir.mktmpdir { |dir|
+      Dir.chdir dir
+      ScraperWiki.save_sqlite(['id'], {'id'=> 10, 'animal'=> 'fox', 'awesomeness'=> 23 }, table_name = "animals")
+      ScraperWiki.save_sqlite(['id'], {'id'=> 11, 'animal'=> 'cat', 'awesomeness'=> 22 }, table_name = "animals")
+
+      assert_equal ScraperWiki.select("animal,awesomeness,id from animals"),[{"animal"=>"fox", "awesomeness"=>23, "id"=>10}, {"animal"=>"cat", "awesomeness"=>22, "id"=>11}]
+      ScraperWiki.close_sqlite
+    }
+  end
 end
