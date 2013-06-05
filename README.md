@@ -1,30 +1,23 @@
-ScraperWiki Ruby library
-========================
+# ScraperWiki Ruby library
 
 This is a Ruby library for scraping web pages and saving data.
 
 It is the easiest way to save data on the ScraperWiki platform, and it
 can also be used locally or on your own servers.
 
-
-Installing
-==========
+## Installing
 
 ```
 gem install scraperwiki
 ```
 
-Scraping
-========
+## Scraping
 
-ScraperWiki.scrape(url[, params])
----------------------------------
+### ScraperWiki.scrape(url[, params])
 
 Returns the downloaded string from the given *url*. *params* are sent as a POST if set.
 
-
-Saving data
-===========
+### Saving data
 
 Helper functions for saving and querying an SQL database. Updates the schema
 automatically according to the data you save.
@@ -32,9 +25,7 @@ automatically according to the data you save.
 Currently only supports SQLite. It will make a local SQLite database.
 You should expect it to support other SQL databases at a later date.
 
-
-ScraperWiki.save\_sqlite(unique\_keys, data[, table\_name = "swdata"],verbose)
--------------------------------------------------------------------
+### ScraperWiki.save\_sqlite(unique\_keys, data[, table\_name = "swdata"],verbose)
 
 Saves a data record into the datastore into the table given
 by *table_name*.
@@ -48,8 +39,7 @@ For large numbers of records *data* can be a list of dicts.
 
 *verbose*, kept for smooth migration from classic, doesn't do anything yet.
 
-ScraperWiki.sqliteexecute(query,[params],verbose)
----------------------------------
+### ScraperWiki.sqliteexecute(query,[params],verbose)
 
 Executes provided query with the parameters against the database and returns the results in key value pairs
 
@@ -57,8 +47,8 @@ Executes provided query with the parameters against the database and returns the
 
 *params*, if prepared statement will contains an array of values
 
-ScraperWiki.save\_var(name,value,verbose)
----------------------------------
+### ScraperWiki.save\_var(name,value,verbose)
+
 Allows the user to save a single variable (at a time) to carry state across runs of the scraper.
 
 *name*, the variable name
@@ -67,8 +57,8 @@ Allows the user to save a single variable (at a time) to carry state across runs
 
 *verbose*, verbosity level
 
-ScraperWiki.get\_var(name,default,verbose)
----------------------------------
+### ScraperWiki.get\_var(name,default,verbose)
+
 Allows the user to retrieve a previously saved variable
 
 *name*, The variable name to fetch
@@ -77,8 +67,8 @@ Allows the user to retrieve a previously saved variable
 
 *verbose*, verbosity level
 
-ScraperWiki.select(partial\_query,[params],verbose)
----------------------------------
+### ScraperWiki.select(partial\_query,[params],verbose)
+
 Allows for a simplified select statement
 
 *partial_query*, A valid select statement, without the select keyword
@@ -86,3 +76,9 @@ Allows for a simplified select statement
 *params* Any data provided for ? replacements in the query
 
 *verbose*, verbosity level
+
+## Usage
+
+Run your Ruby scraper and any data saved will be put in an SQLite database in the current directory called `scraperwiki.sqlite`.
+
+If you're using scrapers from ScraperWiki Classic, remember to add `require 'scraperwiki'` to your file if it's not already there.
