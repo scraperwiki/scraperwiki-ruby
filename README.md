@@ -76,3 +76,9 @@ Allows for a simplified select statement
 *params* Any data provided for ? replacements in the query
 
 *verbose*, verbosity level
+
+## Usage
+
+Run your Ruby scraper and any data saved will be put in an SQLite database in the current directory called `scraperwiki.sqlite`.
+
+If you're using scrapers from ScraperWiki Classic, remember to add `require 'scraperwiki'` to your file if it's not already there.
