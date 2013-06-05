@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+require File.expand_path('../lib/scraperwiki/version', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.authors       = ['Francis irving']
@@ -12,7 +13,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = 'scraperwiki'
   gem.require_paths = ['lib']
-  gem.version       = '2.0.6'
+  gem.version       = ScraperWiki::VERSION
 
   gem.add_dependency "httpclient"
   gem.add_dependency "sqlite3"
