@@ -86,3 +86,8 @@ Allows for a simplified select statement
 *params* Any data provided for ? replacements in the query
 
 *verbose*, verbosity level
+
+Development
+===========
+
+You need the `sqlite3` program installed to run tests. To install run `sudo apt-get install sqlite3` on Ubuntu.
