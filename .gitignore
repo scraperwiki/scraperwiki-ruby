@@ -1,3 +1,4 @@
 *.gem
 *.sw[po]
 .DS_Store
+Gemfile.lock
