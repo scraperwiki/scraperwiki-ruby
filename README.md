@@ -82,3 +82,7 @@ Allows for a simplified select statement
 Run your Ruby scraper and any data saved will be put in an SQLite database in the current directory called `scraperwiki.sqlite`.
 
 If you're using scrapers from ScraperWiki Classic, remember to add `require 'scraperwiki'` to your file if it's not already there.
+
+## Development
+
+You need the `sqlite3` program installed to run tests. To install run `sudo apt-get install sqlite3` on Ubuntu.
