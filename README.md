@@ -1,4 +1,4 @@
-# ScraperWiki Ruby library
+# ScraperWiki Ruby library [![Build Status](https://travis-ci.org/scraperwiki/scraperwiki-ruby.png)](https://travis-ci.org/scraperwiki/scraperwiki-ruby)
 
 This is a Ruby library for scraping web pages and saving data.
 
