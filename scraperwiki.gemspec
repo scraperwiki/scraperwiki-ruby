@@ -1,14 +1,20 @@
-Gem::Specification.new do |s|
-  s.name        = 'scraperwiki'
-  s.version     = '2.0.6'
-  s.date        = '2013-04-04'
-  s.summary     = "ScraperWiki"
-  s.description = "A library for scraping web pages and saving data easily"
-  s.authors     = ["Francis irving"]
-  s.email       = 'francis@scraperwiki.com'
-  s.files       = ["lib/scraperwiki.rb", "lib/scraperwiki/sqlite_save_info.rb"]
-  s.homepage    = 'http://rubygems.org/gems/scraperwiki'
+# -*- encoding: utf-8 -*-
+require File.expand_path('../lib/scraperwiki/version', __FILE__)
 
-  s.add_dependency "httpclient"
-  s.add_dependency "sqlite3"
+Gem::Specification.new do |gem|
+  gem.authors       = ['Francis irving']
+  gem.email         = 'francis@scraperwiki.com'
+  gem.description   = 'A library for scraping web pages and saving data easily'
+  gem.summary       = 'ScraperWiki'
+  gem.homepage      = 'http://rubygems.org/gems/scraperwiki'
+
+  gem.files         = `git ls-files`.split($\)
+  gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
+  gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
+  gem.name          = 'scraperwiki'
+  gem.require_paths = ['lib']
+  gem.version       = ScraperWiki::VERSION
+
+  gem.add_dependency "httpclient"
+  gem.add_dependency "sqlite3"
 end
