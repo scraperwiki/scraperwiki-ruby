@@ -2,7 +2,7 @@
 require File.expand_path('../lib/scraperwiki/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ['Francis irving']
+  gem.authors       = ['Francis Irving']
   gem.email         = 'francis@scraperwiki.com'
   gem.description   = 'A library for scraping web pages and saving data easily'
   gem.summary       = 'ScraperWiki'
