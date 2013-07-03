@@ -219,7 +219,14 @@ describe ScraperWiki do
     end
   end
 
-  describe "#convert_data class method" do
+  describe "#save" do
+    it "should delegate to #save_sqlite" do
+      ScraperWiki.should_receive(:save_sqlite).with(:foo, :bar).and_return(:result)
+      ScraperWiki.save(:foo, :bar).should == :result
+    end
+  end
+
+  describe "#convert_data" do
     it "should return nil if passed nil" do
       ScraperWiki.convert_data(nil).should == nil
     end

@@ -86,6 +86,11 @@ module ScraperWiki
     sqlite_magic_connection.save_data(unique_keys, converted_data, table_name)
   end
 
+  # legacy alias for #save_sqlite method, so works with older scrapers
+  def save(*args)
+    save_sqlite(*args)
+  end
+
   def sqliteexecute(query,data=nil, verbose=2)
     sqlite_magic_connection.execute(query,data)
   end
