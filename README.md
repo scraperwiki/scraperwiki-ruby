@@ -1,6 +1,6 @@
 # ScraperWiki Ruby library [![Build Status](https://travis-ci.org/openc/scraperwiki-ruby.png)](https://travis-ci.org/openc/scraperwiki-ruby)
 
-This is a Ruby library for scraping web pages and saving data. It is a fork/rewrite of the original scraperwiki-ruby gem at, extracting the SQLite utility methods into the sqlite_magic gem.
+This is a Ruby library for scraping web pages and saving data. It is a fork/rewrite of the original [scraperwiki-ruby](https://github.com/scraperwiki/scraperwiki-ruby) gem, extracting the SQLite utility methods into the [sqlite_magic](https://github.com/openc/sqlite_magic) gem.
 
 It is a work in progress (for example, it doesn't yet create indices automatically), but should allow ScraperWiki classic scripts to be run locally. 
 
