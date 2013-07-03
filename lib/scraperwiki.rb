@@ -1,235 +1,172 @@
 require 'httpclient'
-require 'sqlite3'
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
-require 'scraperwiki/sqlite_save_info.rb'
+# require 'scraperwiki/sqlite_save_info.rb'
 require 'scraperwiki/version.rb'
-
-class SqliteException < RuntimeError
-end
+require 'sqlite_magic'
 
 module ScraperWiki
+  extend self
 
-    # The scrape method fetches the content from a webserver.
-    #
-    # === Parameters
-    #
-    # * _url_ = The URL to fetch
-    # * _params_ = The parameters to send with a POST request
-    # * _agent = A manually supplied useragent string
-    #
-    # === Example
-    # ScraperWiki::scrape('http://scraperwiki.com')
-    #
-    def ScraperWiki.scrape(url, params = nil, agent = nil)
-      if agent
-        client = HTTPClient.new(:agent_name => agent)
-      else
-        client = HTTPClient.new
+  # The scrape method fetches the content from a webserver.
+  #
+  # === Parameters
+  #
+  # * _url_ = The URL to fetch
+  # * _params_ = The parameters to send with a POST request
+  # * _agent = A manually supplied useragent string
+  # NB This method hasn't been refactored or tested, but could
+  # prob do with both
+  #
+  # === Example
+  # ScraperWiki::scrape('http://scraperwiki.com')
+  #
+  def scrape(url, params = nil, agent = nil)
+    if agent
+      client = HTTPClient.new(:agent_name => agent)
+    else
+      client = HTTPClient.new
+    end
+    client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    if HTTPClient.respond_to?("client.transparent_gzip_decompression=")
+      client.transparent_gzip_decompression = true
+    end
+
+    if params.nil?
+      html = client.get_content(url)
+    else
+      html = client.post_content(url, params)
+    end
+
+    unless HTTPClient.respond_to?("client.transparent_gzip_decompression=")
+      begin
+        gz = Zlib::GzipReader.new(StringIO.new(html))
+        return gz.read
+      rescue
+        return html
       end
-      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      if HTTPClient.respond_to?("client.transparent_gzip_decompression=")
-        client.transparent_gzip_decompression = true
+    end
+  end
+
+  def convert_data(value_data)
+    return value_data if value_data.nil? or (value_data.respond_to?(:empty?) and value_data.empty?)
+    [value_data].flatten(1).collect do |datum_hash|
+      datum_hash.inject({}) do |hsh, (k,v)|
+        hsh[k] =
+          case v
+          when Date, DateTime
+            v.iso8601
+          when Time
+            # maintains existing ScraperWiki behaviour
+            v.iso8601.sub(/([+-]00:00|Z)$/, '')
+          else
+            v
+          end
+        hsh
       end
+    end
+  end
 
-      if params.nil?
-        html = client.get_content(url)
-      else
-        html = client.post_content(url, params)
-      end
+  # Saves the provided data into a local database for this scraper. Data is upserted
+  # into this table (inserted if it does not exist, updated if the unique keys say it
+  # does).
+  #
+  # === Parameters
+  #
+  # * _unique_keys_ = A list of column names, that used together should be unique
+  # * _data_ = A hash of the data where the Key is the column name, the Value the row
+  #            value. If sending lots of data this can be a array of hashes.
+  # * _table_name_ = The name that the newly created table should use (default is 'swdata').
+  # * _verbose_ = A verbosity level (not currently implemented, and there just to avoid breaking existing code)
+  #
+  # === Example
+  # ScraperWiki::save(['id'], {'id'=>1})
+  #
+  def save_sqlite(unique_keys, data, table_name="swdata",_verbose=0)
+    converted_data = convert_data(data)
+    sqlite_magic_connection.save_data(unique_keys, converted_data, table_name)
+  end
 
-      unless HTTPClient.respond_to?("client.transparent_gzip_decompression=")
-        begin
-          gz = Zlib::GzipReader.new(StringIO.new(html))
-          return gz.read
-        rescue
-          return html
-        end
-      end
+  def sqliteexecute(query,data=nil, verbose=2)
+    sqlite_magic_connection.execute(query,data)
+  end
+
+  def close_sqlite
+    sqlite_magic_connection.close
+    @sqlite_magic_connection = nil
+  end
+
+  # Allows the user to retrieve a previously saved variable
+  #
+  # === Parameters
+  #
+  # * _name_ = The variable name to fetch
+  # * _default_ = The value to use if the variable name is not found
+  # * _verbose_ = A verbosity level (not currently implemented, and there just to avoid breaking existing code)
+  #
+  # === Example
+  # ScraperWiki.get_var('current', 0)
+  #
+  def get_var(name, default=nil, _verbose=2)
+    result = sqlite_magic_connection.execute("select value_blob, type from swvariables where name=?", [name])
+    return default if result.empty?
+    result_val = result.first[:value_blob]
+    case result.first[:type]
+    when 'Fixnum'
+      result_val.to_i
+    when 'Float'
+      result_val.to_f
+    when 'NilClass'
+      nil
+    else
+      result_val
+    end
+  rescue SqliteMagic::NoSuchTable
+    return default
+  end
+
+  # Allows the user to save a single variable (at a time) to carry state across runs of
+  # the scraper.
+  #
+  # === Parameters
+  #
+  # * _name_ = The variable name
+  # * _value_ = The value of the variable
+  # * _verbose_ = A verbosity level (not currently implemented, and there just to avoid breaking existing code)
+  #
+  # === Example
+  # ScraperWiki.save_var('current', 100)
+  #
+  def save_var(name, value, _verbose=2)
+    val_type = value.class.to_s
+    unless ['Fixnum','String','Float','NilClass'].include?(val_type)
+      puts "*** object of type #{val_type} converted to string\n"
     end
 
-    # Saves the provided data into a local database for this scraper. Data is upserted
-    # into this table (inserted if it does not exist, updated if the unique keys say it 
-    # does).
-    #
-    # === Parameters
-    #
-    # * _unique_keys_ = A list of column names, that used together should be unique
-    # * _data_ = A hash of the data where the Key is the column name, the Value the row
-    #            value.  If sending lots of data this can be a list of hashes.
-    # * _table_name_ = The name that the newly created table should use.
-    #
-    # === Example
-    # ScraperWiki::save(['id'], {'id'=>1})
-    #
-    def ScraperWiki.save_sqlite(unique_keys, data, table_name="swdata",verbose=0)
-        raise 'unique_keys must be nil or an array' if unique_keys != nil && !unique_keys.kind_of?(Array)
-        raise 'data must have a non-nil value' if data == nil
+    data = { :name => name.to_s, :value_blob => value.to_s, :type => val_type }
+    sqlite_magic_connection.save_data([:name], data, 'swvariables')
+  end
 
-        # convert :symbols to "strings"
-        unique_keys = unique_keys.map { |x| x.kind_of?(Symbol) ? x.to_s : x }
+  # Allows for a simplified select statement
+  #
+  # === Parameters
+  #
+  # * _sqlquery_ = A valid select statement, without the select keyword
+  # * _data_ = Bind variables provided for ? replacements in the query. See Sqlite3#execute for details
+  # * _verbose_ = A verbosity level (not currently implemented, and there just to avoid breaking existing code)
+  #
+  # === Returns
+  # An array of hashes containing the returned data
+  #
+  # === Example
+  # ScraperWiki.select('* from swdata')
+  #
+  def select(sqlquery, data=nil, _verbose=1)
+    sqlite_magic_connection.execute("SELECT "+sqlquery, data)
+  end
 
-        if data.class == Hash
-            data = [ data ]
-        elsif data.length == 0
-            return
-        end
+  # Establish an SQLiteMagic::Connection (and remember it)
+  def sqlite_magic_connection
+    @sqlite_magic_connection ||= SqliteMagic::Connection.new
+  end
 
-        rjdata = [ ]
-        for ldata in data
-            ljdata = _convdata(unique_keys, ldata)
-            rjdata.push(ljdata)
-
-        end
-
-        SQLiteMagic._do_save_sqlite(unique_keys, rjdata, table_name)
-    end 
-
-    def ScraperWiki.sqliteexecute(query,data=nil, verbose=2)
-      SQLiteMagic.sqliteexecute(query,data,verbose)
-    end
-
-    def ScraperWiki.close_sqlite()
-        SQLiteMagic.close
-    end
-
-    # Internal function to check a row of data, convert to right format
-    def ScraperWiki._convdata(unique_keys, scraper_data)
-        if unique_keys
-            for key in unique_keys
-                if !key.kind_of?(String) and !key.kind_of?(Symbol)
-                    raise 'unique_keys must each be a string or a symbol, this one is not: ' + key
-                end
-                if !scraper_data.include?(key) and !scraper_data.include?(key.to_sym)
-                    raise 'unique_keys must be a subset of data, this one is not: ' + key
-                end
-                if scraper_data[key] == nil and scraper_data[key.to_sym] == nil
-                    raise 'unique_key value should not be nil, this one is nil: ' + key
-                end
-            end
-        end
-
-        jdata = { }
-        scraper_data.each_pair do |key, value|
-            raise 'key must not have blank name' if not key
-
-            key = key.to_s if key.kind_of?(Symbol)
-            raise 'key must be string or symbol type: ' + key if key.class != String
-            raise 'key must be simple text: ' + key if !/[a-zA-Z0-9_\- ]+$/.match(key)
-
-            # convert formats
-            if value.kind_of?(Date)
-                value = value.iso8601
-            end
-            if value.kind_of?(Time)
-                value = value.iso8601
-                raise "internal error, timezone came out as non-UTC while converting to SQLite format" unless value.match(/([+-]00:00|Z)$/)
-                value.gsub!(/([+-]00:00|Z)$/, '')
-            end
-            if ![Fixnum, Float, String, TrueClass, FalseClass, NilClass].include?(value.class)
-                value = value.to_s
-            end
-
-            jdata[key] = value
-        end
-        return jdata
-    end
-
-    # Allows the user to retrieve a previously saved variable
-    #
-    # === Parameters
-    #
-    # * _name_ = The variable name to fetch
-    # * _default_ = The value to use if the variable name is not found
-    # * _verbose_ = Verbosity level
-    #
-    # === Example
-    # ScraperWiki::get_var('current', 0)
-    #
-    def ScraperWiki.get_var(name, default=nil, verbose=2)
-        begin
-            result = ScraperWiki.sqliteexecute("select value_blob, type from swvariables where name=?", [name], verbose)
-        rescue NoSuchTableSqliteException => e   
-            return default
-        end
-        
-        if !result.has_key?("data") 
-            return default          
-        end 
-        
-        if result["data"].length == 0
-            return default
-        end
-        # consider casting to type
-        svalue = result["data"][0][0]
-        vtype = result["data"][0][1]
-        if vtype == "Fixnum"
-            return svalue.to_i
-        end
-        if vtype == "Float"
-            return svalue.to_f
-        end
-        if vtype == "NilClass"
-            return nil
-        end
-        return svalue
-    end
-    
-    # Allows the user to save a single variable (at a time) to carry state across runs of
-    # the scraper.
-    #
-    # === Parameters
-    #
-    # * _name_ = The variable name
-    # * _value_ = The value of the variable
-    # * _verbose_ = Verbosity level
-    #
-    # === Example
-    # ScraperWiki::save_var('current', 100)
-    #
-    def ScraperWiki.save_var(name, value, verbose=2)
-        vtype = String(value.class)
-        svalue = value.to_s
-        if vtype != "Fixnum" and vtype != "String" and vtype != "Float" and vtype != "NilClass"
-            puts "*** object of type "+vtype+" converted to string\n"
-        end
-        data = { "name" => name, "value_blob" => svalue, "type" => vtype }
-        ScraperWiki.save_sqlite(unique_keys=["name"], data=data, table_name="swvariables", verbose=verbose)
-    end
-
-    def ScraperWiki.raisesqliteerror(rerror)
-        if /sqlite3.Error: no such table:/.match(rerror)  # old dataproxy
-            raise NoSuchTableSqliteException.new(rerror)
-        end
-        if /DB Error: \(OperationalError\) no such table:/.match(rerror)
-            raise NoSuchTableSqliteException.new(rerror)
-        end
-        raise SqliteException.new(rerror)
-    end
-
-    # Allows for a simplified select statement
-    #
-    # === Parameters
-    #
-    # * _sqlquery_ = A valid select statement, without the select keyword
-    # * _data_ = Any data provided for ? replacements in the query
-    # * _verbose_ = A verbosity level
-    #
-    # === Returns
-    # A list of hashes containing the returned data
-    #
-    # === Example
-    # ScraperWiki::select('* from swdata')    
-    #    
-    def ScraperWiki.select(sqlquery, data=nil, verbose=1)
-        if data != nil && sqlquery.scan(/\?/).length != 0 && data.class != Array
-            data = [data]
-        end
-        result = ScraperWiki.sqliteexecute("select "+sqlquery, data, verbose)
-        res = [ ]
-        for d in result["data"]
-            #res.push(Hash[result["keys"].zip(d)])           # post-1.8.7
-            res.push(Hash[*result["keys"].zip(d).flatten])   # pre-1.8.7
-        end
-        return res
-    end
 end

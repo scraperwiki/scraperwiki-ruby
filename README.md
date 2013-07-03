@@ -1,15 +1,18 @@
-# ScraperWiki Ruby library [![Build Status](https://travis-ci.org/scraperwiki/scraperwiki-ruby.png)](https://travis-ci.org/scraperwiki/scraperwiki-ruby)
+# ScraperWiki Ruby library [![Build Status](https://travis-ci.org/openc/scraperwiki-ruby.png)](https://travis-ci.org/openc/scraperwiki-ruby)
 
-This is a Ruby library for scraping web pages and saving data.
+This is a Ruby library for scraping web pages and saving data. It is a fork/rewrite of the original scraperwiki-ruby gem at, extracting the SQLite utility methods into the sqlite_magic gem.
 
-It is the easiest way to save data on the ScraperWiki platform, and it
-can also be used locally or on your own servers.
+It is a work in progress (for example, it doesn't yet create indices automatically), but should allow ScraperWiki classic scripts to be run locally. 
 
 ## Installing
 
-```
-gem install scraperwiki
-```
+Add this line to your application's Gemfile:
+
+    gem 'scraperwiki-ruby', :git => 'git@github.com:openc/sqlite_magic.git'
+
+And then execute:
+
+    $ bundle
 
 ## Scraping
 
@@ -23,19 +26,18 @@ Helper functions for saving and querying an SQL database. Updates the schema
 automatically according to the data you save.
 
 Currently only supports SQLite. It will make a local SQLite database.
-You should expect it to support other SQL databases at a later date.
 
 ### ScraperWiki.save\_sqlite(unique\_keys, data[, table\_name = "swdata"],verbose)
 
 Saves a data record into the datastore into the table given
 by *table_name*.
 
-*data* is a hash object with field names as keys (can be strings or symbols).
+*data* is a hash with field names as keys (can be strings or symbols).
 
 *unique_keys* is a subset of data.keys() which determines when a record is
 overwritten.
 
-For large numbers of records *data* can be a list of dicts.
+For large numbers of records *data* can be an array of hashes.
 
 *verbose*, kept for smooth migration from classic, doesn't do anything yet.
 
