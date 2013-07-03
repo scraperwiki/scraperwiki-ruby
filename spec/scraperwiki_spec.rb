@@ -136,31 +136,31 @@ describe ScraperWiki do
     it 'should select data using given key' do
       @dummy_sqlite_magic_connection.should_receive(:execute).
                                      with("select value_blob, type from swvariables where name=?", [:foo]).
-                                     and_return([{:value_blob => 'bar', :type => 'String'}])
+                                     and_return([{'value_blob' => 'bar', 'type' => 'String'}])
       ScraperWiki.get_var(:foo)
     end
 
     it 'should return data returned by sqlite_magic_connection' do
       @dummy_sqlite_magic_connection.stub(:execute).
-                                     and_return([{:value_blob => 'bar', :type => 'String'}])
+                                     and_return([{'value_blob' => 'bar', 'type' => 'String'}])
       ScraperWiki.get_var(:foo).should == 'bar'
     end
 
     it 'should cast Fixnum data to integer' do
       @dummy_sqlite_magic_connection.stub(:execute).
-                                     and_return([{:value_blob => '42', :type => 'Fixnum'}])
+                                     and_return([{'value_blob' => '42', 'type' => 'Fixnum'}])
       ScraperWiki.get_var(:foo).should == 42
     end
 
     it 'should cast Float data to float' do
       @dummy_sqlite_magic_connection.stub(:execute).
-                                     and_return([{:value_blob => '0.234', :type => 'Float'}])
+                                     and_return([{'value_blob' => '0.234', 'type' => 'Float'}])
       ScraperWiki.get_var(:foo).should == '0.234'.to_f
     end
 
     it 'should cast Nil data to nil' do
       @dummy_sqlite_magic_connection.stub(:execute).
-                                     and_return([{:value_blob => 'nil', :type => 'NilClass'}])
+                                     and_return([{'value_blob' => 'nil', 'type' => 'NilClass'}])
       ScraperWiki.get_var(:foo).should be_nil
     end
 

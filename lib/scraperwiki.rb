@@ -114,8 +114,8 @@ module ScraperWiki
   def get_var(name, default=nil, _verbose=2)
     result = sqlite_magic_connection.execute("select value_blob, type from swvariables where name=?", [name])
     return default if result.empty?
-    result_val = result.first[:value_blob]
-    case result.first[:type]
+    result_val = result.first['value_blob']
+    case result.first['type']
     when 'Fixnum'
       result_val.to_i
     when 'Float'
