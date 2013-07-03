@@ -19,6 +19,7 @@ Gem::Specification.new do |gem|
   gem.version       = ScraperWiki::VERSION
 
   gem.add_dependency "httpclient"
+  gem.add_dependency "sqlite_magic"
   # gem.add_dependency "sqlite3"
   gem.add_development_dependency "rake"
   gem.add_development_dependency "rspec"
