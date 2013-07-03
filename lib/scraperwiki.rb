@@ -66,6 +66,9 @@ module ScraperWiki
     end
   end
 
+  def config=(config_hash)
+    @config ||= config_hash
+  end
   # Saves the provided data into a local database for this scraper. Data is upserted
   # into this table (inserted if it does not exist, updated if the unique keys say it
   # does).
@@ -171,7 +174,8 @@ module ScraperWiki
 
   # Establish an SQLiteMagic::Connection (and remember it)
   def sqlite_magic_connection
-    @sqlite_magic_connection ||= SqliteMagic::Connection.new
+    db = @config ? @config[:db] : 'sqlite.db'
+    @sqlite_magic_connection ||= SqliteMagic::Connection.new(db)
   end
 
 end

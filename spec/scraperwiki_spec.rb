@@ -2,14 +2,6 @@ require 'scraperwiki'
 require 'spec_helper'
 require 'debugger'
 
-# module SqliteMagic
-#   class SqliteException < StandardError;end
-#   class NoSuchTable < SqliteException;end
-#   module Connection
-#   end
-# end
-
-
 describe ScraperWiki do
   before do
     @dummy_sqlite_magic_connection = stub('sqlite_magic_connection')
@@ -19,6 +11,15 @@ describe ScraperWiki do
   after do
     # reset cached value
     ScraperWiki.instance_variable_set(:@sqlite_magic_connection, nil)
+    ScraperWiki.instance_variable_set(:@config, nil)
+  end
+
+  describe "#config=" do
+    it "should set config instance variable" do
+      ScraperWiki.config = :some_config
+      ScraperWiki.instance_variable_get(:@config).should == :some_config
+    end
+
   end
 
   describe 'sqlite_magic_connection' do
@@ -28,9 +29,22 @@ describe ScraperWiki do
       ScraperWiki.select(sql_snippet, ['foo', 'bar'])
     end
 
-    it 'should get an SqlitMagic::Connection' do
-      SqliteMagic::Connection.should_receive(:new).and_return(@dummy_sqlite_magic_connection)
-      ScraperWiki.sqlite_magic_connection
+    context 'and no config set' do
+      it 'should get an SqliteMagic::Connection with default db name and no path' do
+        SqliteMagic::Connection.should_receive(:new).with('sqlite.db').and_return(@dummy_sqlite_magic_connection)
+        ScraperWiki.sqlite_magic_connection
+      end
+    end
+
+    context 'and config set' do
+      before do
+        ScraperWiki.config = {:db => '/some/location/of/sqlite_file.db'}
+      end
+
+      it 'should get an SqliteMagic::Connection with db set in config' do
+        SqliteMagic::Connection.should_receive(:new).with('/some/location/of/sqlite_file.db').and_return(@dummy_sqlite_magic_connection)
+        ScraperWiki.sqlite_magic_connection
+      end
     end
 
     it 'should cache connection' do
