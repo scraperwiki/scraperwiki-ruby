@@ -4,7 +4,7 @@ require 'debugger'
 
 describe ScraperWiki do
   before do
-    @dummy_sqlite_magic_connection = stub('sqlite_magic_connection')
+    @dummy_sqlite_magic_connection = double('sqlite_magic_connection')
     SqliteMagic::Connection.stub(:new).and_return(@dummy_sqlite_magic_connection)
   end
 
