@@ -23,12 +23,6 @@ describe ScraperWiki do
   end
 
   describe 'sqlite_magic_connection' do
-    it 'should execute select query and bind variables to connection' do
-      sql_snippet = 'foo from bar WHERE "baz"=42'
-      @dummy_sqlite_magic_connection.should_receive(:execute).with("SELECT #{sql_snippet}", ['foo', 'bar'])
-      ScraperWiki.select(sql_snippet, ['foo', 'bar'])
-    end
-
     context 'and no config set' do
       it 'should get an SqliteMagic::Connection with default db name and no path' do
         SqliteMagic::Connection.should_receive(:new).with('scraperwiki.sqlite').and_return(@dummy_sqlite_magic_connection)
