@@ -31,7 +31,7 @@ describe ScraperWiki do
 
     context 'and no config set' do
       it 'should get an SqliteMagic::Connection with default db name and no path' do
-        SqliteMagic::Connection.should_receive(:new).with('sqlite.db').and_return(@dummy_sqlite_magic_connection)
+        SqliteMagic::Connection.should_receive(:new).with('scraperwiki.sqlite').and_return(@dummy_sqlite_magic_connection)
         ScraperWiki.sqlite_magic_connection
       end
     end

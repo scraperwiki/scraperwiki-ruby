@@ -174,7 +174,7 @@ module ScraperWiki
 
   # Establish an SQLiteMagic::Connection (and remember it)
   def sqlite_magic_connection
-    db = @config ? @config[:db] : 'sqlite.db'
+    db = @config ? @config[:db] : 'scraperwiki.sqlite'
     @sqlite_magic_connection ||= SqliteMagic::Connection.new(db)
   end
 
