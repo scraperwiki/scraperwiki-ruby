@@ -8,7 +8,7 @@ It is a work in progress (for example, it doesn't yet create indices automatical
 
 Add this line to your application's Gemfile:
 
-    gem 'scraperwiki-ruby', :git => 'git@github.com:openc/sqlite_magic.git'
+    gem 'scraperwiki'
 
 And then execute:
 
