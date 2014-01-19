@@ -3,6 +3,8 @@ $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 # require 'scraperwiki/sqlite_save_info.rb'
 require 'scraperwiki/version.rb'
 require 'sqlite_magic'
+require 'json'
+
 
 module ScraperWiki
   extend self
@@ -125,6 +127,8 @@ module ScraperWiki
       result_val.to_f
     when 'NilClass'
       nil
+    when 'Array'
+      JSON.parse(result_val)
     else
       result_val
     end
@@ -146,11 +150,11 @@ module ScraperWiki
   #
   def save_var(name, value, _verbose=2)
     val_type = value.class.to_s
-    unless ['Fixnum','String','Float','NilClass'].include?(val_type)
+    unless ['Fixnum','String','Float','NilClass', 'Array'].include?(val_type)
       puts "*** object of type #{val_type} converted to string\n"
     end
-
-    data = { :name => name.to_s, :value_blob => value.to_s, :type => val_type }
+    val = value.is_a?(Array) ? value.to_json : value.to_s
+    data = { :name => name.to_s, :value_blob => val, :type => val_type }
     sqlite_magic_connection.save_data([:name], data, 'swvariables')
   end
 

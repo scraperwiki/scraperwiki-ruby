@@ -138,6 +138,13 @@ describe ScraperWiki do
       @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, anything, "swvariables")
       ScraperWiki.save_var(:foo, 'bar')
     end
+
+    context "and data passed is an Array" do
+      it 'should save data as string with data class as :type' do
+        @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, {:name => 'foo', :value_blob => ['bar',nil,42].to_json, :type => 'Array'}, anything)
+        ScraperWiki.save_var(:foo, ['bar',nil,42])
+      end
+    end
   end
 
   describe '#get_var' do
@@ -170,6 +177,13 @@ describe ScraperWiki do
       @dummy_sqlite_magic_connection.stub(:execute).
                                      and_return([{'value_blob' => 'nil', 'type' => 'NilClass'}])
       ScraperWiki.get_var(:foo).should be_nil
+    end
+
+    it 'should cast json-serialized Array data to nil' do
+      array = ['a', nil, 123]
+      @dummy_sqlite_magic_connection.stub(:execute).
+                                     and_return([{'value_blob' => array.to_json, 'type' => 'Array'}])
+      ScraperWiki.get_var(:foo).should == array
     end
 
     context 'and connection returns empty array' do
