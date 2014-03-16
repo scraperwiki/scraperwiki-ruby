@@ -127,7 +127,7 @@ module ScraperWiki
       result_val.to_f
     when 'NilClass'
       nil
-    when 'Array'
+    when 'Array','Hash'
       JSON.parse(result_val)
     else
       result_val
@@ -150,10 +150,10 @@ module ScraperWiki
   #
   def save_var(name, value, _verbose=2)
     val_type = value.class.to_s
-    unless ['Fixnum','String','Float','NilClass', 'Array'].include?(val_type)
+    unless ['Fixnum','String','Float','NilClass', 'Array','Hash'].include?(val_type)
       puts "*** object of type #{val_type} converted to string\n"
     end
-    val = value.is_a?(Array) ? value.to_json : value.to_s
+    val = val_type[/Array|Hash/] ? value.to_json : value.to_s
     data = { :name => name.to_s, :value_blob => val, :type => val_type }
     sqlite_magic_connection.save_data([:name], data, 'swvariables')
   end
