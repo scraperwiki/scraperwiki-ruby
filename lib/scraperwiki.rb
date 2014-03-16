@@ -86,7 +86,8 @@ module ScraperWiki
   # === Example
   # ScraperWiki::save(['id'], {'id'=>1})
   #
-  def save_sqlite(unique_keys, data, table_name="swdata",_verbose=0)
+  def save_sqlite(unique_keys, data, table_name=nil,_verbose=0)
+    table_name ||= default_table_name
     converted_data = convert_data(data)
     sqlite_magic_connection.save_data(unique_keys, converted_data, table_name)
   end
@@ -180,6 +181,10 @@ module ScraperWiki
   def sqlite_magic_connection
     db = @config ? @config[:db] : 'scraperwiki.sqlite'
     @sqlite_magic_connection ||= SqliteMagic::Connection.new(db)
+  end
+
+  def default_table_name
+    (@config && @config[:default_table_name]) || 'swdata'
   end
 
 end

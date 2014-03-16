@@ -93,6 +93,18 @@ describe ScraperWiki do
       ScraperWiki.save_sqlite(:unique_keys, :some_data)
     end
 
+    context "and default_table_name set in config" do
+      before do
+        ScraperWiki.config = {:default_table_name => 'my_default_table'}
+      end
+
+      it 'should save data in default_table_name' do
+        @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, anything, 'my_default_table')
+        ScraperWiki.save_sqlite(:unique_keys, :some_data)
+      end
+
+    end
+
     it 'should save data in given table' do
       @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, anything, 'another_table')
       ScraperWiki.save_sqlite(:unique_keys, :some_data, 'another_table')
