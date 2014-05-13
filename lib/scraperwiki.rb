@@ -173,8 +173,12 @@ module ScraperWiki
   # === Example
   # ScraperWiki.select('* from swdata')
   #
-  def select(sqlquery, data=nil, _verbose=1)
-    sqlite_magic_connection.execute("SELECT "+sqlquery, data)
+  def select(sqlquery, data=nil, _verbose=1, &block)
+    if block
+      sqlite_magic_connection.execute("SELECT "+sqlquery, data, block)
+    else
+      sqlite_magic_connection.execute("SELECT "+sqlquery, data)
+    end
   end
 
   # Establish an SQLiteMagic::Connection (and remember it)

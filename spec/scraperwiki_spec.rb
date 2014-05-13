@@ -69,6 +69,20 @@ describe ScraperWiki do
         ScraperWiki.select(sql_snippet)
       end
     end
+
+    context "and block passed" do
+      it "should yield results to block" do
+        # got to be a better way of doing this.
+        @dummy_sqlite_magic_connection.stub(:execute) do |*args|
+          blokk = args.last
+          blokk.call(:foo)
+          blokk.call(:bar)
+        end
+        results = []
+        ScraperWiki.select('foo from bar WHERE "baz"=42') { |res| results << res.to_s }
+        results.should == ['foo', 'bar']
+      end
+    end
   end
 
   describe '#save_sqlite' do
