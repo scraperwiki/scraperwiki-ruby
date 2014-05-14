@@ -166,6 +166,8 @@ module ScraperWiki
   # * _sqlquery_ = A valid select statement, without the select keyword
   # * _data_ = Bind variables provided for ? replacements in the query. See Sqlite3#execute for details
   # * _verbose_ = A verbosity level (not currently implemented, and there just to avoid breaking existing code)
+  # * [optionally] a block can be also be passed and the result rows will be passed
+  # one-by-one to the black rather than loading and returning the whole result set
   #
   # === Returns
   # An array of hashes containing the returned data
@@ -173,9 +175,13 @@ module ScraperWiki
   # === Example
   # ScraperWiki.select('* from swdata')
   #
-  def select(sqlquery, data=nil, _verbose=1, &block)
-    if block
-      sqlite_magic_connection.execute("SELECT "+sqlquery, data, block)
+  def select(sqlquery, data=nil, _verbose=1)
+    if block_given?
+      sqlite_magic_connection.database.
+                              query("SELECT "+sqlquery, data).
+                              each_hash do |row_hash|
+         yield row_hash
+      end
     else
       sqlite_magic_connection.execute("SELECT "+sqlquery, data)
     end

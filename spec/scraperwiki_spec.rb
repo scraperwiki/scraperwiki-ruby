@@ -42,7 +42,8 @@ describe ScraperWiki do
     end
 
     it 'should cache connection' do
-      SqliteMagic::Connection.should_receive(:new).and_return(@dummy_sqlite_magic_connection) # just once
+      SqliteMagic::Connection.should_receive(:new).
+                              and_return(@dummy_sqlite_magic_connection) # just once
       ScraperWiki.sqlite_magic_connection
       ScraperWiki.sqlite_magic_connection
     end
@@ -71,16 +72,35 @@ describe ScraperWiki do
     end
 
     context "and block passed" do
-      it "should yield results to block" do
-        # got to be a better way of doing this.
-        @dummy_sqlite_magic_connection.stub(:execute) do |*args|
-          blokk = args.last
-          blokk.call(:foo)
-          blokk.call(:bar)
-        end
+      before do
+        @sql_snippet = 'foo from bar WHERE "baz"=42'
+        @database = mock(:database)
+        @result_enumerator = mock(:result_enumerator, :each_hash => nil)
+        @dummy_sqlite_magic_connection.stub(:database).and_return(@database)
+      end
+
+      it 'should not execute select query on connection' do
+        @database.stub(:query).and_return(@result_enumerator)
+        @dummy_sqlite_magic_connection.should_not_receive(:execute)
+
+        ScraperWiki.select(@sql_snippet, ['foo', 'bar']) { |res| results << res.to_s }
+      end
+
+      it "should make query on connection database and yield results to block" do
+        @database.should_receive(:query).
+                 with("SELECT #{@sql_snippet}", ['foo', 'bar']).
+                 and_return(@result_enumerator)
+        @result_enumerator.should_receive(:each_hash).
+                           and_yield(:result_1).
+                           and_yield(:result_2)
+        #  do |*args|
+        #   blokk = args.last
+        #   blokk.call(:foo)
+        #   blokk.call(:bar)
+        # end
         results = []
-        ScraperWiki.select('foo from bar WHERE "baz"=42') { |res| results << res.to_s }
-        results.should == ['foo', 'bar']
+        ScraperWiki.select(@sql_snippet, ['foo', 'bar']) { |res| results << res.to_s }
+        results.should == ['result_1', 'result_2']
       end
     end
   end
