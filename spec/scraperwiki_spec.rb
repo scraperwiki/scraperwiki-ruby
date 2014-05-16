@@ -93,11 +93,6 @@ describe ScraperWiki do
         @result_enumerator.should_receive(:each_hash).
                            and_yield(:result_1).
                            and_yield(:result_2)
-        #  do |*args|
-        #   blokk = args.last
-        #   blokk.call(:foo)
-        #   blokk.call(:bar)
-        # end
         results = []
         ScraperWiki.select(@sql_snippet, ['foo', 'bar']) { |res| results << res.to_s }
         results.should == ['result_1', 'result_2']
