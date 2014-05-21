@@ -42,7 +42,8 @@ describe ScraperWiki do
     end
 
     it 'should cache connection' do
-      SqliteMagic::Connection.should_receive(:new).and_return(@dummy_sqlite_magic_connection) # just once
+      SqliteMagic::Connection.should_receive(:new).
+                              and_return(@dummy_sqlite_magic_connection) # just once
       ScraperWiki.sqlite_magic_connection
       ScraperWiki.sqlite_magic_connection
     end
@@ -69,6 +70,34 @@ describe ScraperWiki do
         ScraperWiki.select(sql_snippet)
       end
     end
+
+    context "and block passed" do
+      before do
+        @sql_snippet = 'foo from bar WHERE "baz"=42'
+        @database = mock(:database)
+        @result_enumerator = mock(:result_enumerator, :each_hash => nil)
+        @dummy_sqlite_magic_connection.stub(:database).and_return(@database)
+      end
+
+      it 'should not execute select query on connection' do
+        @database.stub(:query).and_return(@result_enumerator)
+        @dummy_sqlite_magic_connection.should_not_receive(:execute)
+
+        ScraperWiki.select(@sql_snippet, ['foo', 'bar']) { |res| results << res.to_s }
+      end
+
+      it "should make query on connection database and yield results to block" do
+        @database.should_receive(:query).
+                 with("SELECT #{@sql_snippet}", ['foo', 'bar']).
+                 and_return(@result_enumerator)
+        @result_enumerator.should_receive(:each_hash).
+                           and_yield(:result_1).
+                           and_yield(:result_2)
+        results = []
+        ScraperWiki.select(@sql_snippet, ['foo', 'bar']) { |res| results << res.to_s }
+        results.should == ['result_1', 'result_2']
+      end
+    end
   end
 
   describe '#save_sqlite' do
@@ -91,6 +120,18 @@ describe ScraperWiki do
     it 'should save data in swdata by default' do
       @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, anything, 'swdata')
       ScraperWiki.save_sqlite(:unique_keys, :some_data)
+    end
+
+    context "and default_table_name set in config" do
+      before do
+        ScraperWiki.config = {:default_table_name => 'my_default_table'}
+      end
+
+      it 'should save data in default_table_name' do
+        @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, anything, 'my_default_table')
+        ScraperWiki.save_sqlite(:unique_keys, :some_data)
+      end
+
     end
 
     it 'should save data in given table' do
@@ -138,6 +179,20 @@ describe ScraperWiki do
       @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, anything, "swvariables")
       ScraperWiki.save_var(:foo, 'bar')
     end
+
+    context "and data passed is an Array" do
+      it 'should save data as string with data class as :type' do
+        @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, {:name => 'foo', :value_blob => ['bar',nil,42].to_json, :type => 'Array'}, anything)
+        ScraperWiki.save_var(:foo, ['bar',nil,42])
+      end
+    end
+
+    context "and data passed is a Hash" do
+      it 'should save data as string with data class as :type' do
+        @dummy_sqlite_magic_connection.should_receive(:save_data).with(anything, {:name => 'foo', :value_blob => {'bar' => 42}.to_json, :type => 'Hash'}, anything)
+        ScraperWiki.save_var(:foo, {'bar' => 42})
+      end
+    end
   end
 
   describe '#get_var' do
@@ -170,6 +225,20 @@ describe ScraperWiki do
       @dummy_sqlite_magic_connection.stub(:execute).
                                      and_return([{'value_blob' => 'nil', 'type' => 'NilClass'}])
       ScraperWiki.get_var(:foo).should be_nil
+    end
+
+    it 'should cast json-serialized Array data to Array' do
+      array = ['a', nil, 123]
+      @dummy_sqlite_magic_connection.stub(:execute).
+                                     and_return([{'value_blob' => array.to_json, 'type' => 'Array'}])
+      ScraperWiki.get_var(:foo).should == array
+    end
+
+    it 'should cast json-serialized Hash data to Hash' do
+      hash = {'a' => 123}
+      @dummy_sqlite_magic_connection.stub(:execute).
+                                     and_return([{'value_blob' => hash.to_json, 'type' => 'Hash'}])
+      ScraperWiki.get_var(:foo).should == hash
     end
 
     context 'and connection returns empty array' do
