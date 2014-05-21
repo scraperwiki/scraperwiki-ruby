@@ -3,6 +3,8 @@ $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 # require 'scraperwiki/sqlite_save_info.rb'
 require 'scraperwiki/version.rb'
 require 'sqlite_magic'
+require 'json'
+
 
 module ScraperWiki
   extend self
@@ -84,7 +86,8 @@ module ScraperWiki
   # === Example
   # ScraperWiki::save(['id'], {'id'=>1})
   #
-  def save_sqlite(unique_keys, data, table_name="swdata",_verbose=0)
+  def save_sqlite(unique_keys, data, table_name=nil,_verbose=0)
+    table_name ||= default_table_name
     converted_data = convert_data(data)
     sqlite_magic_connection.save_data(unique_keys, converted_data, table_name)
   end
@@ -125,6 +128,8 @@ module ScraperWiki
       result_val.to_f
     when 'NilClass'
       nil
+    when 'Array','Hash'
+      JSON.parse(result_val)
     else
       result_val
     end
@@ -146,11 +151,11 @@ module ScraperWiki
   #
   def save_var(name, value, _verbose=2)
     val_type = value.class.to_s
-    unless ['Fixnum','String','Float','NilClass'].include?(val_type)
+    unless ['Fixnum','String','Float','NilClass', 'Array','Hash'].include?(val_type)
       puts "*** object of type #{val_type} converted to string\n"
     end
-
-    data = { :name => name.to_s, :value_blob => value.to_s, :type => val_type }
+    val = val_type[/Array|Hash/] ? value.to_json : value.to_s
+    data = { :name => name.to_s, :value_blob => val, :type => val_type }
     sqlite_magic_connection.save_data([:name], data, 'swvariables')
   end
 
@@ -161,6 +166,8 @@ module ScraperWiki
   # * _sqlquery_ = A valid select statement, without the select keyword
   # * _data_ = Bind variables provided for ? replacements in the query. See Sqlite3#execute for details
   # * _verbose_ = A verbosity level (not currently implemented, and there just to avoid breaking existing code)
+  # * [optionally] a block can be also be passed and the result rows will be passed
+  # one-by-one to the black rather than loading and returning the whole result set
   #
   # === Returns
   # An array of hashes containing the returned data
@@ -169,13 +176,25 @@ module ScraperWiki
   # ScraperWiki.select('* from swdata')
   #
   def select(sqlquery, data=nil, _verbose=1)
-    sqlite_magic_connection.execute("SELECT "+sqlquery, data)
+    if block_given?
+      sqlite_magic_connection.database.
+                              query("SELECT "+sqlquery, data).
+                              each_hash do |row_hash|
+         yield row_hash
+      end
+    else
+      sqlite_magic_connection.execute("SELECT "+sqlquery, data)
+    end
   end
 
   # Establish an SQLiteMagic::Connection (and remember it)
   def sqlite_magic_connection
     db = @config ? @config[:db] : 'scraperwiki.sqlite'
     @sqlite_magic_connection ||= SqliteMagic::Connection.new(db)
+  end
+
+  def default_table_name
+    (@config && @config[:default_table_name]) || 'swdata'
   end
 
 end
